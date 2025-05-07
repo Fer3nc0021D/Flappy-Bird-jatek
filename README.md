@@ -15,4 +15,4 @@
 # Installation :books:
 ### System Requirements
 * [Beak](https://fer3nc0021d.github.io/Flappy-Bird-jatek/)
-<img src="https://t.bkit.co/w_681b48d42e762.gif" />
+<img src="https://t.bkit.co/w_681b48d42e762.gif" />  
