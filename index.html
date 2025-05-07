@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flappy Bird</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: #70c5ce;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+    }
+
+    canvas {
+      border: 2px solid #000;
+      background: linear-gradient(#70c5ce, #fff);
+      display: none; /* A vászon alapértelmezetten nem látszik */
+    }
+
+    .menu {
+      text-align: center;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+
+    .menu h1 {
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+
+    .menu button {
+      font-size: 24px;
+      padding: 10px 20px;
+      background-color: #f39c12;
+      border: none;
+      color: white;
+      cursor: pointer;
+      margin: 10px;
+    }
+
+    .menu button:hover {
+      background-color: #e67e22;
+    }
+
+    .shop-menu {
+      display: none;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 20px;
+      border-radius: 10px;
+      color: white;
+    }
+
+    .shop-menu h2 {
+      font-size: 36px;
+    }
+
+    .shop-menu button {
+      margin: 10px;
+      padding: 10px 20px;
+      background-color: #27ae60;
+    }
+
+    .shop-menu button:hover {
+      background-color: #2ecc71;
+    }
+
+    .game-over-menu {
+      display: none;
+      text-align: center;
+      color: white;
+      font-family: Arial, sans-serif;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 20px;
+      border-radius: 10px;
+    }
+
+    .game-over-menu h2 {
+      font-size: 36px;
+    }
+
+    .game-over-menu button {
+      margin: 10px;
+      padding: 10px 20px;
+      background-color: #f39c12;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+
+    .game-over-menu button:hover {
+      background-color: #e67e22;
+    }
+  </style>
+</head>
+<body>
+  <div class="menu" id="menu">
+    <h1>Flappy Bird</h1>
+    <button id="playButton">PLAY</button>
+    <button id="shopButton">SHOP</button>
+  </div>
+
+  <div class="shop-menu" id="shopMenu">
+    <h2>Válaszd ki a madár formáját!</h2>
+    <button id="normalButton">Normal (Kocka)</button>
+    <button id="donutButton">Donut (Lyukas Kocka)</button>
+    <button id="closeShopButton">Bezárás</button>
+  </div>
+
+  <div class="game-over-menu" id="gameOverMenu">
+    <h2>Vége a játéknak!</h2>
+    <p>Pontszám: <span id="finalScore"></span></p>
+    <p>Rekord: <span id="highScoreText"></span></p>
+    <button id="retryButton">Próbáld Újra</button>
+    <button id="menuButton">Menü</button>
+  </div>
+
+  <canvas id="gameCanvas" width="400" height="400"></canvas>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const menu = document.getElementById("menu");
+    const playButton = document.getElementById("playButton");
+    const shopButton = document.getElementById("shopButton");
+    const shopMenu = document.getElementById("shopMenu");
+    const closeShopButton = document.getElementById("closeShopButton");
+    const gameOverMenu = document.getElementById("gameOverMenu");
+    const retryButton = document.getElementById("retryButton");
+    const menuButton = document.getElementById("menuButton");
+    const finalScore = document.getElementById("finalScore");
+    const highScoreText = document.getElementById("highScoreText");
+
+    let birdShape = "normal";  // Alapértelmezetten a madár forma "normal"
+
+    // Madár beállítások
+    const bird = {
+      x: 50,
+      y: 150,
+      width: 30,
+      height: 30,
+      gravity: 0.6,
+      velocity: 0,
+      jump: -8,
+      shape: birdShape
+    };
+
+    // Csövek
+    const pipes = [];
+    const pipeWidth = 60;
+    const pipeGap = 150;
+    const pipeSpeed = 2;
+    let frame = 0;
+
+    // Pontszám, játékállapot
+    let score = 0;
+    let gameOver = false;
+
+    // High Score kezelése
+    let highScore = localStorage.getItem("flappyHighScore") || 0;
+
+    // Idő-alapú loophoz
+    let lastTime = 0;
+
+    // Madár formájának és színének megrajzolása
+    function drawBird() {
+      // Szín változtatás pontszám alapján
+      let birdColor = "yellow"; // alapértelmezett szín
+      if (score >= 30) {
+        birdColor = "blue"; // 30 pontnál kék lesz
+      } else if (score >= 20) {
+        birdColor = "blue"; // 20 pontnál kék lesz
+      } else if (score >= 10) {
+        birdColor = "red"; // 10 pontnál piros lesz
+      }
+
+      ctx.fillStyle = birdColor; // Madár színe a pontszám alapján
+
+      if (bird.shape === "normal") {
+        // Normál kocka
+        ctx.fillRect(bird.x, bird.y, bird.width, bird.height);
+      } else if (bird.shape === "donut") {
+        // Donut forma (lyukas kocka)
+        ctx.fillRect(bird.x, bird.y, bird.width, bird.height); // Nagy kocka
+        // Közepén lévő lyuk eltávolítása
+        ctx.clearRect(bird.x + bird.width / 4, bird.y + bird.height / 4, bird.width / 2, bird.height / 2);
+      }
+    }
+
+    // Csövek színének módosítása
+    function drawPipes() {
+      let pipeColor = score >= 30 ? "red" : "green"; // 30 pontnál piros, különben zöld
+      ctx.fillStyle = pipeColor;
+      pipes.forEach(pipe => {
+        ctx.fillRect(pipe.x, 0, pipeWidth, pipe.top);
+        ctx.fillRect(pipe.x, pipe.top + pipeGap, pipeWidth, canvas.height - pipe.top - pipeGap);
+      });
+    }
+
+    function updatePipes() {
+      if (frame % 90 === 0) {
+        const topHeight = Math.floor(Math.random() * 150) + 100;
+        pipes.push({ x: canvas.width, top: topHeight });
+      }
+
+      pipes.forEach(pipe => {
+        pipe.x -= pipeSpeed;
+        if (pipe.x + pipeWidth === bird.x) score++;
+        if (
+          bird.x < pipe.x + pipeWidth &&
+          bird.x + bird.width > pipe.x &&
+          (bird.y < pipe.top || bird.y + bird.height > pipe.top + pipeGap)
+        ) {
+          gameOver = true;
+        }
+      });
+
+      if (pipes.length && pipes[0].x + pipeWidth < 0) {
+        pipes.shift();
+      }
+    }
+
+    function drawScore() {
+      ctx.fillStyle = "black";
+      ctx.font = "24px Arial";
+      ctx.fillText("Pontszám: " + score, 10, 30);
+      ctx.fillText("Rekord: " + highScore, 10, 60);
+    }
+
+    function drawGameOver() {
+      finalScore.textContent = score;
+      highScoreText.textContent = highScore;
+
+      gameOverMenu.style.display = "block";  // Játék vége menü megjelenítése
+      canvas.style.display = "none";  // Vászon eltüntetése
+    }
+
+    function resetGame() {
+      bird.y = 150;
+      bird.velocity = 0;
+      pipes.length = 0;
+      score = 0;
+      frame = 0;
+      gameOver = false;
+      lastTime = 0;  // időzítés resetelése
+    }
+
+    function gameLoop(timestamp) {
+      if (!lastTime) lastTime = timestamp;
+      const deltaTime = (timestamp - lastTime) / 16.67; // norm. 60 FPS-re
+      lastTime = timestamp;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Madár mozgása
+      bird.velocity += bird.gravity * deltaTime;
+      bird.y += bird.velocity * deltaTime;
+
+      drawBird();
+      updatePipes();
+      drawPipes();
+      drawScore();
+
+      // Ütközés a földdel vagy plafonnal
+      if (bird.y + bird.height > canvas.height || bird.y < 0) {
+        gameOver = true;
+      }
+
+      if (gameOver) {
+        drawGameOver();
+      } else {
+        frame++;
+        requestAnimationFrame(gameLoop);
+      }
+    }
+
+    // Ugrás billentyűvel vagy érintéssel
+    function flapOrRestart() {
+      if (gameOver) {
+        resetGame();
+        gameOverMenu.style.display = "none";  // Játék vége menü eltüntetése
+        canvas.style.display = "block";  // Vászon megjelenítése
+        requestAnimationFrame(gameLoop);
+      } else {
+        bird.velocity = bird.jump;
+      }
+    }
+
+    // Menü és játék indítása
+    function startGame() {
+      menu.style.display = "none"; // Menü eltüntetése
+      canvas.style.display = "block"; // Vászon megjelenítése
+      requestAnimationFrame(gameLoop); // Játék indítása
+    }
+
+    function openShop() {
+      shopMenu.style.display = "block";  // Vásárló menü megjelenítése
+    }
+
+    function closeShop() {
+      shopMenu.style.display = "none";  // Vásárló menü eltüntetése
+    }
+
+    // Madár forma kiválasztása
+    function selectShape(shape) {
+      bird.shape = shape;
+      birdShape = shape;
+      closeShop();
+    }
+
+    // Menü és újraindítás gombok eseménykezelői
+    retryButton.addEventListener("click", () => {
+      resetGame();
+      gameOverMenu.style.display = "none";
+      canvas.style.display = "block";
+      requestAnimationFrame(gameLoop);
+    });
+
+    menuButton.addEventListener("click", () => {
+      gameOverMenu.style.display = "none";
+      menu.style.display = "block";
+    });
+
+    playButton.addEventListener("click", startGame);
+    shopButton.addEventListener("click", openShop);
+    closeShopButton.addEventListener("click", closeShop);
+    document.addEventListener("keydown", e => {
+      if (e.code === "Space") flapOrRestart();
+    });
+    canvas.addEventListener("touchstart", flapOrRestart);
+
+    // Formaválasztók
+    document.getElementById("normalButton").addEventListener("click", () => selectShape("normal"));
+    document.getElementById("donutButton").addEventListener("click", () => selectShape("donut"));
+  </script>
+</body>
+</html>
