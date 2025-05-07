@@ -2,7 +2,7 @@
 **Flappy-Bird-jatek** Ez egy izgalmas játék próbáljátok ki sokan!
 
 
-#### You can checkout the [**Demo Here**] (https://fer3nc0021d.github.io/Flappy-Bird-jatek/) :boom:
+#### You can checkout the [**Itt a játék**](https://fer3nc0021d.github.io/Flappy-Bird-jatek/) :boom:
 
 
 # Testing and more testing :sparkles:
