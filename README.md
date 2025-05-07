@@ -2,4 +2,14 @@
 **Flappy-Bird-jatek** Ez egy izgalmas játék próbáljátok ki sokan!
 
 
-#### You can checkout the [***Demo Here*]
+#### You can checkout the [**Demo Here**] (https://fer3nc0021d.github.io/Flappy-Bird-jatek/) :boom:
+
+
+# Testing and more testing :sparkles:
+* Nagyszerű játék
+* Izgalmas
+*  1 személyes
+
+# Installation :books:
+### System Requirements
+* [Beak](https://fer3nc0021d.github.io/Flappy-Bird-jatek/)
