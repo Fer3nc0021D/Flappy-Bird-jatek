@@ -6,9 +6,11 @@
 
 
 # Testing and more testing :sparkles:
-* Nagyszerű játék
-* Izgalmas
-*  1 személyes
+* Free and easy
+* A funny game
+* Compatible with [Github Pages](https://pages.github.com/)
+* Responsive
+
 
 # Installation :books:
 ### System Requirements
